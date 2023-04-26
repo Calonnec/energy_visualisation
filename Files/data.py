@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 
 def data_read():
-    data = pd.read_csv("data/data.csv")
+    data = pd.read_csv("app/data/data.csv")
     return data
 
 def make_data_monthly(data):
