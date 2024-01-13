@@ -34,7 +34,7 @@ col_but2.button("Country charts", key="button2", on_click=click, args=("but2","b
 data_graph = make_data(data)
 #------------------------------------------------------------------------------------------
 if st.session_state["but2"] is True:
-    placeholder.markdown("View the breakdown of the energy produced by a country per year.\n You can view either the raw value (in bilion of kWh) or in proportion of the total enegery produced (in %).")
+    placeholder.markdown("View the breakdown of the energy produced by a country per year.\n You can view either the raw value (in bilion of kWh) or in proportion of the total energy produced (in %).")
     country_list = data_graph["country"].unique()
     col_sel1, col_sel2 = st.columns(2)
     country = col_sel1.selectbox("Country selector",country_list,key="dropdown1")
