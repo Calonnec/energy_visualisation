@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+Amazon Data exploration.ipynb
+data_country_year.csv
+data_year_all.csv
 
 # C extensions
 *.so

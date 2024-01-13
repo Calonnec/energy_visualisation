@@ -1,4 +1,4 @@
-from Files.data import make_data_yearly, data_read, make_country_plot_yearly, make_country_ratio_yearly, make_data_rad_ratio, make_data_rad_total, make_data_global_plot
+from Files.data_update import data_read, make_data, make_global_map, make_bar_graph, make_line_graph
 import streamlit as st
 
 data = data_read()
@@ -7,61 +7,57 @@ if "but1" not in st.session_state:
     st.session_state["but1"] = False
 if "but2" not in st.session_state:
     st.session_state["but2"] = False
-if "but3" not in st.session_state:
-    st.session_state["but3"] = False
 
-def click(key0, key1, key2):
+def click(key0, key1):
     st.session_state[key0] = True
     st.session_state[key1] = False
-    st.session_state[key2] = False
-    placeholder.empty()
+    #placeholder.empty()
 
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(layout="centered", initial_sidebar_state="expanded")
 
 st.sidebar.header("Additional info")
 placeholder = st.sidebar.empty()
 placeholder.markdown("""
-                     The data has been sourced from the IEA and covers the dates from 2020 to 2022. The data only contains 53 countries.\n
-                     The dataset is missing some key countries (like Russia or the Middle East) which production's capabilities would have changed some balance presented here.\n
-                     This is an exercise for me to practice data visualisation and should be viewed as such.\n
-                     The dataset can be found here https://www.iea.org/data-and-statistics/data-tools/monthly-electricity-statistics
-                     """)
+                     Select an option to start.
+                      """)
+on = st.sidebar.toggle("view data source", key="tog1")
+if on:
+    st.sidebar.write("Data source: https://www.eia.gov/international/data/world/electricity/electricity-generation?pd=2&p=00000020000000000000000000000fvu&u=1&f=A&v=column&a=-&i=none&vo=value&t=C&g=00000000000000000000000000000000000000000000000001&l=249-ruvvvvvfvtvnvv1vrvvvvfvvvvvvfvvvou20evvvvvvvvvvvvvvs&s=315532800000&e=1609459200000&vb=146&ev=false")
 
 st.header("Energy production visualisation")
 st.text(" ")
 
-col_but1, col_but2, col_but3 = st.columns(3)
-col_but1.button("Country charts", key="button1", on_click=click, args=("but1","but2","but3"))
-col_but2.button("Global ratio charts", key="button2", on_click=click, args=("but2","but1","but3"))
-col_but3.button("Global charts", key="button3", on_click=click, args=("but3","but1","but2"))
+col_but1, col_but2 = st.columns(2)
+col_but1.button("Global map", key="button1", on_click=click, args=("but1","but2"))
+col_but2.button("Country charts", key="button2", on_click=click, args=("but2","but1"))
 
-data_yearly = make_data_yearly(data)
+data_graph = make_data(data)
 #------------------------------------------------------------------------------------------
-if st.session_state["but1"] is True:
-    placeholder.markdown("View the breakdown of the energy produced by a country per year.")
-    country_list = data_yearly["COUNTRY"].unique()
-    country = st.selectbox("Country selector",country_list,key="dropdown1")
+if st.session_state["but2"] is True:
+    placeholder.markdown("View the breakdown of the energy produced by a country per year.\n You can view either the raw value (in bilion of kWh) or in proportion of the total enegery produced (in %).")
+    country_list = data_graph["country"].unique()
+    col_sel1, col_sel2 = st.columns(2)
+    country = col_sel1.selectbox("Country selector",country_list,key="dropdown1")
+    percent = col_sel2.selectbox("Display type",["raw value", "percent"],key="dropdown2")
 
-    col1, col2 = st.columns(2)
-    col1.plotly_chart(make_country_plot_yearly(country, data_yearly), use_container_width=True)
-    col2.plotly_chart(make_country_ratio_yearly(country, data_yearly))
+    st.plotly_chart(make_bar_graph(data_graph,country, percent), use_container_width=True)
+    st.plotly_chart(make_line_graph(data_graph, country))
 
 #--------------------------------------------------------------------------------------------
-if st.session_state["but2"] is True:
-    placeholder.markdown("View the type of energy produced by country as a ratio of the country's total production (left) and its actual value (right) per year.")
-    energy_dict = {"Renewables": "%_RENEWABLE_PRODUCED", "Nuclear":"%_NUCLEAR_PRODUCED", "Fossile":"%_FOSSILE_PRODUCED"}
-    energy_type = st.selectbox("Energy type",energy_dict.keys(),key="dropdown2")
+if st.session_state["but1"] is True:
+    placeholder.markdown("View on the world map the energy production for each country. You can select the type of energy and type of representation.")
+    energy_perc = ["Renewables", "Nuclear", "Fossile"]
+    energy_raw = ["Total produced","Nucluear produced", "Fossil produced", "Renewables produced"]
+    energy_dict = {"Renewables": "%_produced_Renewables", "Nuclear":"%_produced_Nuclear", "Fossile":"%_produced_fossil", "Total produced": "Generation (billion kWh)","Nucluear produced": "Nuclear (billion kWh)", "Fossil produced": "Fossil fuels (billion kWh)", "Renewables produced" : "Renewables (billion kWh)"}
 
-    col1, col2 = st.columns(2)
-    col1.plotly_chart(make_data_rad_ratio(energy_dict[energy_type], data_yearly))
-    col2.plotly_chart(make_data_rad_total(energy_type, data_yearly))
+    year_list = data_graph["year"].unique()
+    col_sel3, col_sel4, col_sel5 = st.columns(3)
+    year = col_sel3.selectbox("Year",year_list,key="dropdown3")
+    type_en = col_sel4.selectbox("Display type", ["Raw", "percent"],key="dropdown4")
+    if type_en == "Raw":
+        power = col_sel5.selectbox("Energy type",energy_raw,key="dropdown5")
+    else: power = col_sel5.selectbox("Energy type",energy_perc,key="dropdown6")
+
+    st.plotly_chart(make_global_map(data_graph,year, energy_dict[power]), use_container_width=True)
 
 #----------------------------------------------------------------------------------------------
-if st.session_state["but3"] is True:
-    placeholder.markdown("""
-                         View the total energy production at a continent or global level (for participating countries).\n
-                         You can click on the entry in the legend of the graph to toggle them on or off.""")
-    list_org = ['OECD Americas','OECD Asia Oceania', 'OECD Europe', 'OECD Total','IEA Total']
-    org = st.selectbox("Country selector",list_org,key="dropdown2")
-
-    st.plotly_chart(make_data_global_plot(data_yearly,org))
